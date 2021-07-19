@@ -1,0 +1,29 @@
+/* required styles */
+
+	.legend, .temporal-legend {
+   		padding: 5px 10px;
+    		font: 14px/10px Arial, Helvetica, sans-serif;
+   		background: white;
+    		background: rgba(255,255,255,0.8);
+    		box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    		border-radius: 5px;
+	}
+	#legendTitle {
+  	  	text-align: center;
+   	 	margin-bottom: 15px;
+   		font-variant: 14px/10px Arial;
+	}
+	.symbolsContainer {
+    		float: left;
+		margin-left: 50px;
+	}
+	.legendCircle {
+     	border-radius:50%; 
+     	border: 1px solid #c20808; 
+     	background: rgba(255, 0, 0, .4);
+	 	display: inline-block;
+	}
+	.legendValue {
+    		position: absolute;
+    		right: 8px;
+	}

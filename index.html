@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Indice de dependência</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+          integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+          crossorigin=""/>
+
+    <!--Zoom Home-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+            integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+            crossorigin=""></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/esri-leaflet@2.4.1/dist/esri-leaflet.js"
+            integrity="sha512-xY2smLIHKirD03vHKDJ2u4pqeHA7OQZZ27EjtqmuhDguxiUvdsOuXMwkg16PQrm9cgTmXtoxA6kwr8KBy3cdcw=="
+            crossorigin=""></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        #map {
+            min-height: 100%;
+        }
+
+        #side-panel {
+            position: absolute;
+            bottom: 15px;
+            right: 10px;
+            width: 130px;
+            margin: 5px auto;
+            padding: 0 4px;
+            background: rgba(255, 255, 255, .8);
+            border: 1px solid grey;
+            border-radius: 3px;
+            z-index: 800;
+            color: #000;
+        }
+
+        .info {
+            padding: 6px 8px;
+            line-height: 18px;
+            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .info h4 {
+            margin: 0 0 5px;
+            color: #000;
+        }
+		
+		.brsmall { 
+            display: block; 
+            margin-bottom: .5em; 
+        } 
+
+        /* --- Zoom Home --- */
+        .leaflet-bar a {
+            background-color: #fff;
+            border-bottom: 1px solid #ccc;
+            color: #000000;
+            display: block;
+            height: 26px;
+            width: 26px;
+            line-height: 1.45 !important;
+            text-align: center;
+            text-decoration: none;
+            font: bold 18px monospace;
+        }
+
+
+        #range-slider {
+            width: 1000px;
+        }
+
+        .legend {
+            text-align: left;
+            line-height: 20px;
+            color: #000000;
+        }
+
+        .legend i {
+            width: 19px;
+            height: 20px;
+            float: left;
+            margin-right: 10px;
+            opacity: 1;
+        }
+
+        #info {
+            margin: 10px;
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            width: 400px;
+            height: 45px;
+            overflow-y: auto;
+            max-height: 400px;
+            background-color: #fff;
+            z-index: 999;
+        }
+
+
+    </style>
+</head>
+
+<body>
+<div id="map"></div>
+
+
+<script>
+    var sudoeste = L.latLng(-64, -150),
+			nordeste = L.latLng(80, 150),
+			extensao = L.latLngBounds(sudoeste, nordeste);
+	
+	
+		var map = L.map('map', {
+			zoomControl: false,
+			center: [53.2, 22],
+			//zoom:5,
+			//maxZoom: 12,
+			minZoom: 3,
+			maxBounds: extensao,
+		});
+
+    var lat = 53.5; // __________Zoom Home
+    var lng = 22; // __________Zoom Home
+    var zoom = 3; // __________Zoom Home
+    var globalTimestamp = "2";
+
+    map.setView([lat, lng], zoom); // __________Zoom Home
+
+    var layer = L.esri.basemapLayer('Gray').addTo(map);
+
+    L.Control.zoomHome = L.Control.extend({
+        options: {
+            position: 'topleft',
+            zoomInText: '+',
+            zoomInTitle: 'Zoom in',
+            zoomOutText: '-',
+            zoomOutTitle: 'Zoom out',
+            zoomHomeText: '<i class="fa fa-home" style="line-height:1.65;"></i>',
+            zoomHomeTitle: 'Zoom home'
+        },
+
+        onAdd: function (map) {
+            var controlName = 'gin-control-zoom',
+                container = L.DomUtil.create('div', controlName + ' leaflet-bar'),
+                options = this.options;
+
+            this._zoomInButton = this._createButton(options.zoomInText, options.zoomInTitle,
+                controlName + '-in', container, this._zoomIn);
+            this._zoomHomeButton = this._createButton(options.zoomHomeText, options.zoomHomeTitle,
+                controlName + '-home', container, this._zoomHome);
+            this._zoomOutButton = this._createButton(options.zoomOutText, options.zoomOutTitle,
+                controlName + '-out', container, this._zoomOut);
+
+            this._updateDisabled();
+            map.on('zoomend zoomlevelschange', this._updateDisabled, this);
+
+            return container;
+        },
+
+        onRemove: function (map) {
+            map.off('zoomend zoomlevelschange', this._updateDisabled, this);
+        },
+
+        _zoomIn: function (e) {
+            this._map.zoomIn(e.shiftKey ? 3 : 1);
+        },
+
+        _zoomOut: function (e) {
+            this._map.zoomOut(e.shiftKey ? 3 : 1);
+        },
+
+        _zoomHome: function (e) {
+            map.setView([lat, lng], zoom);
+        },
+
+        _createButton: function (html, title, className, container, fn) {
+            var link = L.DomUtil.create('a', className, container);
+            link.innerHTML = html;
+            link.href = '#';
+            link.title = title;
+
+            L.DomEvent.on(link, 'mousedown dblclick', L.DomEvent.stopPropagation)
+                .on(link, 'click', L.DomEvent.stop)
+                .on(link, 'click', fn, this)
+                .on(link, 'click', this._refocusOnMap, this);
+
+            return link;
+        },
+
+        _updateDisabled: function () {
+            var map = this._map,
+                className = 'leaflet-disabled';
+
+            L.DomUtil.removeClass(this._zoomInButton, className);
+            L.DomUtil.removeClass(this._zoomOutButton, className);
+
+            if (map._zoom === map.getMinZoom()) {
+                L.DomUtil.addClass(this._zoomOutButton, className);
+            }
+            if (map._zoom === map.getMaxZoom()) {
+                L.DomUtil.addClass(this._zoomInButton, className);
+            }
+        }
+    });
+
+    //change the file name to yours
+    $.getJSON('envelhecimento.geojson')  // The getJSON() method is used to get JSON data
+        .done(function (data) {
+            var info = processData(data);
+            createChoroplet(info.timestamps, data);
+            createSliderUI(info.timestamps);
+            drawLegend(info.min, info.max);
+        });
+
+
+    function processData(data) {
+        // First, initialize the variables to hold the timestamps and min/max population values
+        var timestamps = [];  // square brackets to define an array of data
+                              // because there are multiple timestamps
+        var min = Infinity; // for the min, begin with the largest possible value - infinity
+        var max = -Infinity;// for the max, begin with the smallest possible value - negative infinity
+
+        // Go through each row/feature of the data table
+        // Note data is the variable name in the function definition - processData(data)
+        for (var feature in data.features) {
+            var properties = data.features[feature].properties;
+
+            // At each row, go through the columns/attributes to get the values
+            for (var attribute in properties) {
+                if (attribute != 'Pais' &&
+                    attribute != 'COD_NUTS' &&
+                    attribute != 'POP_2018')   // != means NOT EQUAL TO
+                // These three columns are NOT recorded
+                // Modify this part when mapping your own data
+                {
+                    if ($.inArray(attribute, timestamps) === -1) { // JQuery in.Array() method searches for a specified value within an array and return its index (or -1 if not found)
+                        // here, the new timestamp is only added when it is not already in the array
+                        // triple equals === compares both type and value
+
+                        timestamps.push(attribute);  // The JS push() method adds new items to the end of an array
+                                                     // and returns the new length of the array
+                    }
+                    if (properties[attribute] < min) {
+                        min = properties[attribute]; // record/update the current smaller values as the min
+                    }
+                    if (properties[attribute] > max) {
+                        max = properties[attribute]; // record/update the current larger values as the max
+                    }
+                }
+            }
+        }
+        return {
+            timestamps: timestamps,
+            min: min,
+            max: max
+        }
+    }
+
+    function createSliderUI(timestamps) {
+        var sliderControl = L.control({position: 'bottomleft'}); // position of the slider
+        // Another use of L.control :)
+        sliderControl.onAdd = function (map) {
+            //initialize a range slider with mousedown control
+            var slider = L.DomUtil.create("input", "range-slider");
+            L.DomEvent.addListener(slider, 'mousedown', function (e) {
+                L.DomEvent.stopPropagation(e);
+                map.dragging.disable();
+                map.dragging.enable();
+            });
+
+
+            // André, podes atualizar os labels sff
+            var labels = ["1991", "2001", "2011"];
+            console.log("max" + timestamps[timestamps.length - 1]);
+            console.log("min " + timestamps[0]);
+            $(slider)
+                .attr({
+                    'type': 'range',
+                    'max': timestamps[2],
+                    'min': timestamps[0],
+                    'step': 1, // Change this to match the numeric interval between adjacent timestamps
+                    'value': String(timestamps[2])
+                })
+                .on('input change', function () {
+                    updateChoropletSymb($(this).val().toString()); // update the map for the timestamp
+                    var i = $.inArray(this.value, timestamps);
+                    $(".temporal-legend").text(labels[i]); // update the label for the timestamp
+                });
+            return slider;
+        };
+        sliderControl.addTo(map);
+        createTimeLabel("2011"); //The starting timestamp label
+    }
+
+
+    // Add labels to the time slider when the map first loaded
+    function createTimeLabel(startTimestamp) {
+        var temporalLegend = L.control({position: 'bottomleft'}); // same position as the slider
+        temporalLegend.onAdd = function (map) {
+            var output = L.DomUtil.create("output", "temporal-legend");
+            $(output).text(startTimestamp);
+            return output;
+        };
+        temporalLegend.addTo(map);
+
+    }
+
+
+    // The function to update/resize each circle marker according to a value in the time series
+    function updateChoropletSymb(timestamp) {
+        console.log("timestamp!!!!!!! " + timestamp);
+
+        globalTimestamp = timestamp;
+
+        cities.eachLayer(function (layer) {
+                var props = layer.feature.properties;
+                //var popupContent = (props ? '<b>'
+                   // + '<div ALIGN="CENTER">'
+                   // + '<span style = "font-weight:bold; color:black"</span>'
+                   // + props.NOME + '</b><br />' + '<div ALIGN="LEFT">'
+                   // + '<span style = "font-weight:bold; color: #c62121"</span>'
+                   // + String(props[timestamp]) + '<span style="font-weight:normal; color:black"</span> casos por 10 mil habitantes</font>'
+                   // + '</b><br />' : '');
+                //layer.bindPopup(popupContent);
+                layer.setStyle({fillColor: getColor(props[timestamp])});
+            }
+        );
+    }
+
+    // control that shows state info on hover
+    var info = L.control();
+
+    info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'info');
+        this.update();
+        return this._div;
+    };
+
+    info.update = function (props) {
+        // var t = props[timestamp];
+        this._div.innerHTML = (props ?
+            '<b>' + '<div ALIGN="CENTER">'
+            + '<span style = "font-weight:bold; color:black"</span>'
+            + props.Pais + '</b><br />' + '<div ALIGN="LEFT">'
+            + '<p span style = "font-weight:bold; color: #c62121"</p>'
+            + String(props[globalTimestamp])
+            + '<span style="font-weight:normal; color:black"</span> hab./km2</font>'
+            + '</b><br />' : 'Selecione um país');
+
+    };
+
+    info.addTo(map);
+
+    // get color depending on population density value
+    function getColor(d) {
+       return d > 131 ? '#08519c' :
+					d > 101 ? '#3182bd':
+						d > 91 ? '#6baed6' :
+							d > 61 ? '#bdd7e7' :
+								d > 1 ? '#e5ecff' :
+									d = 0 ? '#f5f5f5' :
+										'#f5f5f5';
+    }
+
+    // The function to create the choroplet map
+    function createChoroplet(timestamps, data) {
+        console.log("timestamps " + timestamps);
+        console.log("data " + data);
+
+        cities = L.geoJson(data, {
+            style: {
+                weight: 0.6,
+                opacity: 1,
+                color: 'white',
+                dashArray: '1',
+                fillOpacity: 1.0,
+            },
+            onEachFeature: function (feature, layer) {
+                layer.on('mouseover', function (e) {
+                    var highlightFeature = e.target;
+
+                    this.setStyle({
+                        'color': 'black',
+                        weight: 1.5,
+                        dashArray: '',
+                        fillOpacity: 1,
+                    });
+                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                        layer.bringToFront();
+                        info.update(highlightFeature.feature.properties);
+                    }
+                });
+                layer.on('mouseout', function () {
+                    info.update();
+                    this.setStyle({
+                        'color': 'white',
+                        weight: 0.6,
+                        opacity: 1,
+                        dashArray: '1',
+                        fillOpacity: 1.0,
+                    });
+                });
+            }
+        }).addTo(map);
+
+        console.log("timestamp 0: " + timestamps[0]);
+        updateChoropletSymb(timestamps[2]); // this function is defined below
+        // When loaded, the map will first show proportional symbols with the first timestamp's data
+    }
+
+
+    function drawLegend(min, max) {
+        map.attributionControl.addAttribution('');
+
+
+        var legend = L.control({position: 'bottomright'});
+
+        legend.onAdd = function (map) {
+
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [0, 60, 90, 100, 130, 153 ],
+                labels = ['Sem dados','0-60', '61-90', '91-100', '101-130', '131-153'],
+                from, to;
+
+
+            div.innerHTML = '<FONT SIZE=2 style = "font-family:verdana"><b>Índice de envelhecimento <br> <span>  <span class="brsmall"></span> '; // Títulos da legenda
+
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i>' +
+                    labels[i] + (grades[i + 1] ? '  '
+                    + '<br>' : ' <br> <span SIZE=1>' +
+                    '<span style = "font-weight:normal; style = "font-family:verdana"; color:black"</span>' +
+                    '<FONT SIZE=1 style = "font-family:verdana">Fonte dos dados: <a href="https://ec.europa.eu/eurostat" target="_blank">Eurostat</a>')
+					
+					
+
+
+            }
+            return div;
+        };
+
+        legend.addTo(map);
+    }
+
+    // Creating scale control
+    var scale = L.control.scale();
+    scale.addTo(map);
+
+    // Creating Zoom Home
+    var zoomHome = new L.Control.zoomHome();
+    zoomHome.addTo(map);
+
+</script>
+
+</body>
+</html>
