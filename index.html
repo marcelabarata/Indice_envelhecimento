@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Indice de dependência</title>
+    <title>Indice de envelhecimento</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
           integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
@@ -368,7 +368,7 @@
             + props.Pais + '</b><br />' + '<div ALIGN="LEFT">'
             + '<p span style = "font-weight:bold; color: #c62121"</p>'
             + String(props[globalTimestamp])
-            + '<span style="font-weight:normal; color:black"</span> hab./km2</font>'
+            + '<span style="font-weight:normal; color:black"</span> </font>'
             + '</b><br />' : 'Selecione um país');
 
     };
@@ -448,7 +448,7 @@
                 from, to;
 
 
-            div.innerHTML = '<FONT SIZE=2 style = "font-family:verdana"><b>Índice de envelhecimento <br> <span>  <span class="brsmall"></span> '; // Títulos da legenda
+            div.innerHTML = '<FONT SIZE=2 style = "font-family:verdana"><b>Índice de envelhecimento <br> (nº) <span>  <span class="brsmall"></span> '; // Títulos da legenda
 
             for (var i = 0; i < grades.length; i++) {
                 div.innerHTML +=
